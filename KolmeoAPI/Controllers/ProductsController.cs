@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using KolmeoAPI.DTOs;
+using KolmeoAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using KolmeoAPI.Models;
-using KolmeoAPI.DTOs;
 
 namespace KolmeoAPI.Controllers
 {
@@ -18,10 +13,12 @@ namespace KolmeoAPI.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly ProductContext _context;
+        private readonly ILogger<ProductsController> _logger;
 
-        public ProductsController(ProductContext context)
+        public ProductsController(ProductContext context, ILogger<ProductsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Products
@@ -33,10 +30,14 @@ namespace KolmeoAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts(decimal minPrice = 0, decimal maxPrice = decimal.MaxValue)
         {
+            _logger.LogDebug("Getting list of products");
+
             if (_context.Products == null)
             {
                 return NotFound();
             }
+            var a = await _context.Products.ToListAsync();
+
             return await _context.Products.Where(product => product.Price >= minPrice && product.Price <= maxPrice).Select(product => ProductToDTO(product)).ToListAsync();
         }
 
@@ -48,6 +49,8 @@ namespace KolmeoAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductDTO>> GetProduct(long id)
         {
+            _logger.LogDebug($"Getting a product with id {id}");
+
             if (_context.Products == null)
             {
                 return NotFound();
@@ -72,6 +75,8 @@ namespace KolmeoAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(long id, ProductDTO productDTO)
         {
+            _logger.LogDebug($"Updating a product with name \"{productDTO.Name}\"");
+
             if (id != productDTO.Id)
             {
                 return BadRequest();
@@ -107,6 +112,8 @@ namespace KolmeoAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ProductDTO>> PostProduct(ProductDTO productDTO)
         {
+            _logger.LogDebug($"Creating a new product with name \"{productDTO.Name}\"");
+
             if (_context.Products == null)
             {
                 return Problem("Entity set 'ProductContext.Products'  is null.");
@@ -136,6 +143,8 @@ namespace KolmeoAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(long id)
         {
+            _logger.LogDebug($"Deleting product with id {id}");
+
             if (_context.Products == null)
             {
                 return NotFound();
